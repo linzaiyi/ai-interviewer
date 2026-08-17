@@ -50,17 +50,13 @@ export default function HistoryPage() {
   };
 
   useEffect(() => {
-    const guestSessionId = typeof window !== "undefined" ? localStorage.getItem("guest_session_id") : null;
-    // 登录用户或游客都可以查看历史
-    if (!token && !guestSessionId) {
+    // 只有登录用户才能查看历史记录
+    if (!token) {
       setLoading(false);
       return;
     }
-    const params = new URLSearchParams();
-    if (guestSessionId && !token) params.set("guest_session_id", guestSessionId);
-    const queryStr = params.toString();
-    fetch(`${API_BASE}/interview/history${queryStr ? `?${queryStr}` : ""}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    fetch(`${API_BASE}/interview/history`, {
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
       .then(setInterviews)

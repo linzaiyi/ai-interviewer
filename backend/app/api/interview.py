@@ -141,26 +141,18 @@ async def chat(
 @router.get("/history", response_model=list[InterviewHistoryItem])
 async def get_history(
     current_user: dict = Depends(get_current_user),
-    guest_session_id: str = None,
     db: AsyncSession = Depends(get_db),
 ):
-    # 登录用户按 user_id 查询，游客按 guest_session_id 查询
-    if current_user:
-        result = await db.execute(
-            select(Interview)
-            .where(Interview.user_id == current_user["user_id"])
-            .order_by(desc(Interview.created_at))
-            .limit(20)
-        )
-    elif guest_session_id:
-        result = await db.execute(
-            select(Interview)
-            .where(Interview.guest_session_id == guest_session_id)
-            .order_by(desc(Interview.created_at))
-            .limit(20)
-        )
-    else:
-        return []
+    # 只有登录用户才能查看历史记录
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录后查看面试历史")
+
+    result = await db.execute(
+        select(Interview)
+        .where(Interview.user_id == current_user["user_id"])
+        .order_by(desc(Interview.created_at))
+        .limit(20)
+    )
 
     interviews = result.scalars().all()
     return [

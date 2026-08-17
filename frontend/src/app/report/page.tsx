@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { API_BASE } from "@/lib/utils";
 import { Sparkles, ArrowLeft, TrendingUp, Target, Zap, BookOpen, Lightbulb, ChevronDown, ChevronUp, Award, AlertCircle, ThumbsUp, MessageSquare } from "lucide-react";
@@ -9,7 +9,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Customized,
 } from "recharts";
 
-export default function ReportPage() {
+function ReportPageContent() {
   const searchParams = useSearchParams();
   const interviewId = searchParams.get("id");
   const [report, setReport] = useState<any>(null);
@@ -578,5 +578,20 @@ export default function ReportPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">加载中...</p>
+        </div>
+      </div>
+    }>
+      <ReportPageContent />
+    </Suspense>
   );
 }

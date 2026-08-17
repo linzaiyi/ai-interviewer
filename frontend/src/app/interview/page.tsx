@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { API_BASE } from "@/lib/utils";
@@ -13,7 +13,7 @@ interface Message {
   content: string;
 }
 
-export default function InterviewPage() {
+function InterviewPageContent() {
   const searchParams = useSearchParams();
   const position = searchParams.get("position") || "产品经理";
   const { token } = useAuth();
@@ -89,17 +89,20 @@ export default function InterviewPage() {
     }
   }, []);
 
-  const [profile, setProfile] = useState(() => ({
-    target_position: position,
-    target_industry: "",
-    school: "",
-    degree: "",
-    graduation_year: "",
-    target_city: "",
-    personal_summary: "",
-    ...loadSavedProfile(),
-    target_position: position,  // 岗位始终跟随 URL 参数
-  }));
+  const [profile, setProfile] = useState(() => {
+    const saved = loadSavedProfile();
+    delete saved.target_position; // 岗位始终跟随 URL 参数
+    return {
+      target_position: position,
+      target_industry: "",
+      school: "",
+      degree: "",
+      graduation_year: "",
+      target_city: "",
+      personal_summary: "",
+      ...saved,
+    };
+  });
   const [showProfileForm, setShowProfileForm] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
 
@@ -120,7 +123,7 @@ export default function InterviewPage() {
 
   // 每次修改 profile 时自动保存到 localStorage
   const updateProfile = useCallback((patch: Partial<typeof profile>) => {
-    setProfile((prev) => {
+    setProfile((prev: Record<string, string>) => {
       const next = { ...prev, ...patch };
       try {
         localStorage.setItem("ai_interview_profile", JSON.stringify(next));
@@ -1118,5 +1121,20 @@ export default function InterviewPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function InterviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">加载中...</p>
+        </div>
+      </div>
+    }>
+      <InterviewPageContent />
+    </Suspense>
   );
 }
