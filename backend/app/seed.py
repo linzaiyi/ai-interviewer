@@ -268,7 +268,18 @@ async def seed():
             print(f"岗位 [{pos_data['name']}] 创建完成，包含 {len(pos_data['questions'])} 道题目")
 
         await db.commit()
-        print("所有种子数据导入完成！")
+
+    # 构建 FAISS 向量索引
+    print("\n正在构建 FAISS 向量索引...")
+    from app.ai.rag import index_questions
+    for pos_data in POSITIONS:
+        try:
+            index_questions(pos_data["name"], pos_data["questions"])
+            print(f"  [{pos_data['name']}] FAISS 索引构建完成 ({len(pos_data['questions'])} 条)")
+        except Exception as e:
+            print(f"  [{pos_data['name']}] FAISS 索引构建失败: {e}")
+
+    print("\n所有种子数据导入完成！")
 
 
 if __name__ == "__main__":
