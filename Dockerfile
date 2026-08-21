@@ -10,6 +10,10 @@ COPY backend/requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
+# sentence-transformers 单独安装（避免和 langchain 一起解析导致超时）
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu -i https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip install --no-cache-dir sentence-transformers==3.2.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+
 COPY backend/ /app/
 
 # 预下载模型 + 预建 FAISS 索引（构建时内存充足，避免运行时 OOM）
