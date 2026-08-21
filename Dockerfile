@@ -8,12 +8,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY backend/requirements.txt /app/requirements.txt
 
-# Force reinstall: v2
-RUN pip install --no-cache-dir --force-reinstall -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 COPY backend/ /app/
 
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+# 预下载模型 + 预建 FAISS 索引（构建时内存充足，避免运行时 OOM）
+RUN python -m app.build_faiss
 
 EXPOSE 8000
 
