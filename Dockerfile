@@ -1,3 +1,4 @@
+# Build: v3 (CPU torch, no force-reinstall)
 FROM python:3.12-slim
 
 WORKDIR /app
