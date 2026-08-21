@@ -21,6 +21,6 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # 预建 FAISS 索引（构建时内存充足，避免运行时 OOM）
 RUN python -m app.build_faiss
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

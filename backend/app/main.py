@@ -47,6 +47,11 @@ app.include_router(interview.router)
 app.include_router(positions.router)
 
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "app": "AI Interviewer"}
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok", "app": "AI Interviewer"}
