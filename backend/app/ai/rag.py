@@ -70,24 +70,28 @@ def search_questions(position: str, query: str, n_results: int = 5) -> list[dict
     if not os.path.exists(index_path) or not os.path.exists(metadata_path):
         return []
 
-    # 加载索引和元数据
-    index = faiss.read_index(index_path)
-    with open(metadata_path, "r", encoding="utf-8") as f:
-        metadatas = json.load(f)
+    try:
+        # 加载索引和元数据
+        index = faiss.read_index(index_path)
+        with open(metadata_path, "r", encoding="utf-8") as f:
+            metadatas = json.load(f)
 
-    # 生成查询 embedding
-    model = get_embedding_model()
-    query_embedding = model.encode([query], normalize_embeddings=True)
+        # 生成查询 embedding
+        model = get_embedding_model()
+        query_embedding = model.encode([query], normalize_embeddings=True)
 
-    # 搜索
-    n_results = min(n_results, len(metadatas))
-    distances, indices = index.search(query_embedding.astype(np.float32), n_results)
+        # 搜索
+        n_results = min(n_results, len(metadatas))
+        distances, indices = index.search(query_embedding.astype(np.float32), n_results)
 
-    results = []
-    for i, idx in enumerate(indices[0]):
-        if idx < len(metadatas):
-            meta = metadatas[idx].copy()
-            meta["score"] = float(distances[0][i])
-            results.append(meta)
+        results = []
+        for i, idx in enumerate(indices[0]):
+            if idx < len(metadatas):
+                meta = metadatas[idx].copy()
+                meta["score"] = float(distances[0][i])
+                results.append(meta)
 
-    return results
+        return results
+    except Exception as e:
+        print(f"search_questions failed: {e}", flush=True)
+        return []

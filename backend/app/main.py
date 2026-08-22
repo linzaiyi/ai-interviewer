@@ -20,6 +20,14 @@ async def lifespan(app: FastAPI):
         print("LIFESPAN: creating tables...", flush=True)
         await conn.run_sync(Base.metadata.create_all)
         print("LIFESPAN: tables created", flush=True)
+    # 预加载 embedding 模型（避免首次 RAG 查询时 OOM 崩溃）
+    try:
+        from app.ai.rag import get_embedding_model
+        print("LIFESPAN: loading embedding model...", flush=True)
+        get_embedding_model()
+        print("LIFESPAN: embedding model loaded", flush=True)
+    except Exception as e:
+        print(f"LIFESPAN: embedding model load failed (RAG disabled): {e}", flush=True)
     print("LIFESPAN: startup complete, yielding...", flush=True)
     yield
     print("LIFESPAN: shutting down...", flush=True)
