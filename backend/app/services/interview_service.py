@@ -56,7 +56,7 @@ async def start_interview(
         weakness_areas=weakness_areas,
         resume_data=resume_data,
     )
-    opening = agent.generate_opening()
+    opening = await agent.generate_opening()
     session_key = create_session_id()
     await store_agent(session_key, agent)
     return session_key, opening
@@ -67,7 +67,7 @@ async def chat(session_key: str, user_message: str) -> dict:
     agent = await get_agent(session_key)
     if not agent:
         raise ValueError("面试会话不存在或已过期")
-    response = agent.respond(user_message)
+    response = await agent.respond(user_message)
     await store_agent(session_key, agent)
     return response
 
@@ -85,7 +85,7 @@ async def async_end_interview(session_key: str) -> dict:
 
     conversation = agent.get_conversation()
     evaluator = Evaluator()
-    result = evaluator.evaluate(
+    result = await evaluator.evaluate(
         position=agent.position,
         ability_model=agent.ability_model,
         conversation=conversation,

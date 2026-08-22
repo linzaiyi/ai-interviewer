@@ -25,7 +25,7 @@ class Evaluator:
     def __init__(self):
         self.llm = get_llm(temperature=0.2)
 
-    def evaluate(self, position: str, ability_model: list[dict], conversation: list[dict]) -> dict:
+    async def evaluate(self, position: str, ability_model: list[dict], conversation: list[dict]) -> dict:
         """对面试对话进行评分"""
         conversation_text = "\n".join([
             f"{'面试官' if m['role'] == 'interviewer' else '候选人'}: {m['content']}"
@@ -44,7 +44,7 @@ class Evaluator:
         )
 
         messages = [{"role": "user", "content": prompt}]
-        response = self.llm.invoke(messages)
+        response = await self.llm.ainvoke(messages)
         content = response.content
 
         json_match = re.search(r"\{.*\}", content, re.DOTALL)

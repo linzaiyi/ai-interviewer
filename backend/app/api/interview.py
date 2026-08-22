@@ -103,6 +103,8 @@ async def chat(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"面试服务异常：{str(e)}")
 
     # 更新面试记录（如果有 interview_id）
     if not interview and data.interview_id:

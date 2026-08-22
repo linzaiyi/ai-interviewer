@@ -63,7 +63,7 @@ async def upload_resume(
 
     # AI 解析
     parser = ResumeParser()
-    analysis = parser.parse(
+    analysis = await parser.parse_async(
         resume_text=raw_text,
         position=position,
         industry=target_industry,

@@ -56,3 +56,48 @@ class ResumeParser:
             "analysis_summary": "简历解析失败，请重试",
             "recommended_focus": [],
         }
+
+    async def parse_async(
+        self,
+        resume_text: str,
+        position: str,
+        industry: str,
+        ability_model: list[dict],
+        school: str,
+        degree: str,
+        graduation_year: int,
+        target_city: str,
+        personal_summary: str,
+    ) -> dict:
+        """异步解析简历（用于 FastAPI async 端点）"""
+        prompt = RESUME_PARSE_PROMPT.format(
+            position=position,
+            industry=industry or "不限",
+            ability_model=json.dumps(ability_model, ensure_ascii=False, indent=2),
+            school=school or "未知",
+            degree=degree or "未知",
+            graduation_year=graduation_year or "未知",
+            target_city=target_city or "不限",
+            personal_summary=personal_summary or "无",
+            resume_text=resume_text[:3000],
+        )
+
+        messages = [{"role": "user", "content": prompt}]
+        response = await self.llm.ainvoke(messages)
+        content = response.content
+
+        json_match = re.search(r"\{.*\}", content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group())
+            except json.JSONDecodeError:
+                pass
+
+        return {
+            "match_score": 0,
+            "ability_scores": {d["name"]: 0 for d in ability_model},
+            "skill_gaps": [],
+            "parsed_data": {},
+            "analysis_summary": "简历解析失败，请重试",
+            "recommended_focus": [],
+        }
