@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  env: {
-    NEXT_PUBLIC_API_URL: "https://ai-interviewer-production-479c.up.railway.app",
-  },
   images: {
     remotePatterns: [],
   },
