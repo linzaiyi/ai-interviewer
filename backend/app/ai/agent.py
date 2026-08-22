@@ -115,19 +115,8 @@ class InterviewAgent:
         elif current_dimension:
             dimension_name = current_dimension["name"]
             dimension_desc = current_dimension.get("description", dimension_name)
-            # RAG 检索：从题库中查找与该维度相关的参考题目
+            # RAG 检索暂时禁用（调试中）
             rag_context = ""
-            try:
-                rag_questions = search_questions(self.position, f"{dimension_name} {dimension_desc}", 3)
-                if rag_questions:
-                    rag_context = "\n\n以下是从题库中检索到的参考题目，供你参考出题风格和方向：\n"
-                    for i, q in enumerate(rag_questions, 1):
-                        rag_context += f"{i}. {q['content']}\n"
-                        if q.get("reference_answer"):
-                            rag_context += f"   参考答案要点：{q['reference_answer']}\n"
-                    rag_context += "\n请参考以上题目的风格，结合候选人的实际背景，生成一个考察该维度的面试问题。"
-            except Exception as e:
-                print(f"RAG search failed: {e}", flush=True)
             end_instruction = (
                 f"\n\n当前轮需要考察候选人的【{dimension_name}】能力（权重{current_dimension['weight']}%），"
                 f"请根据候选人上一轮的回答，提出一个与该维度相关的问题。"
