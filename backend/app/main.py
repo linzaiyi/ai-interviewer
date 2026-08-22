@@ -15,11 +15,14 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 启动时创建表
+    print("LIFESPAN: starting...", flush=True)
     async with engine.begin() as conn:
+        print("LIFESPAN: creating tables...", flush=True)
         await conn.run_sync(Base.metadata.create_all)
+        print("LIFESPAN: tables created", flush=True)
+    print("LIFESPAN: startup complete, yielding...", flush=True)
     yield
-    # 关闭时清理
+    print("LIFESPAN: shutting down...", flush=True)
     await engine.dispose()
 
 
