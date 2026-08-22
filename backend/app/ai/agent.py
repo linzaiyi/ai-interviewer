@@ -116,12 +116,10 @@ class InterviewAgent:
         elif current_dimension:
             dimension_name = current_dimension["name"]
             dimension_desc = current_dimension.get("description", dimension_name)
-            # RAG 检索：从题库中查找与该维度相关的参考题目（在线程池中运行，避免阻塞事件循环）
+            # RAG 检索：从题库中查找与该维度相关的参考题目
             rag_context = ""
             try:
-                rag_questions = await asyncio.to_thread(
-                    search_questions, self.position, f"{dimension_name} {dimension_desc}", 3
-                )
+                rag_questions = search_questions(self.position, f"{dimension_name} {dimension_desc}", 3)
                 if rag_questions:
                     rag_context = "\n\n以下是从题库中检索到的参考题目，供你参考出题风格和方向：\n"
                     for i, q in enumerate(rag_questions, 1):
