@@ -84,3 +84,48 @@ async def debug_llm_test():
         import traceback
         traceback.print_exc()
         return {"status": "error", "detail": str(e)}
+
+
+@app.get("/api/debug/chat-sim")
+async def debug_chat_sim():
+    """诊断端点：模拟完整 chat 流程（不含 Redis）"""
+    from app.ai.agent import InterviewAgent
+    import time
+    
+    print("DEBUG CHAT-SIM: starting...", flush=True)
+    try:
+        t0 = time.time()
+        # 创建 Agent
+        agent = InterviewAgent(
+            position="前端开发工程师",
+            profile={"school": "测试大学", "degree": "本科", "graduation_year": 2027, "target_industry": "科技", "personal_summary": ""},
+            ability_model=[
+                {"name": "基础知识", "weight": 30, "description": "前端基础知识"},
+                {"name": "项目经验", "weight": 40, "description": "项目实战"},
+                {"name": "沟通能力", "weight": 30, "description": "沟通表达"},
+            ],
+            weakness_areas=[],
+            resume_data=None,
+        )
+        # 模拟开场白
+        agent.history.append({"role": "interviewer", "content": "你好，请自我介绍"})
+        agent.round_number = 1
+        agent.completed_dimensions.add("基础知识")
+        print(f"DEBUG CHAT-SIM: agent created in {time.time()-t0:.1f}s, calling respond...", flush=True)
+        
+        # 调用 respond
+        t1 = time.time()
+        response = agent.respond("你好，我叫测试，有3年前端经验")
+        elapsed = time.time() - t1
+        print(f"DEBUG CHAT-SIM: respond ok in {elapsed:.1f}s", flush=True)
+        return {
+            "status": "ok",
+            "response": response["content"][:200],
+            "round": response["round_number"],
+            "elapsed": f"{elapsed:.1f}s",
+        }
+    except Exception as e:
+        print(f"DEBUG CHAT-SIM: error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "detail": str(e)}
