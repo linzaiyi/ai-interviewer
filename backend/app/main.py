@@ -75,11 +75,17 @@ async def debug_llm_test():
     from app.ai.llm import get_llm
     from langchain_core.messages import HumanMessage
     
+    print("DEBUG LLM TEST: starting...", flush=True)
     try:
         llm = get_llm(temperature=0.7)
+        print("DEBUG LLM TEST: llm created, invoking...", flush=True)
         response = await asyncio.to_thread(
             llm.invoke, [HumanMessage(content="请用一句话回复：你好，我是AI助手。")]
         )
+        print(f"DEBUG LLM TEST: response received: {response.content[:50]}", flush=True)
         return {"status": "ok", "llm_response": response.content[:200]}
     except Exception as e:
+        print(f"DEBUG LLM TEST: error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return {"status": "error", "detail": str(e)}
