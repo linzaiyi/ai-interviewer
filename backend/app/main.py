@@ -95,7 +95,6 @@ async def debug_chat_sim():
     print("DEBUG CHAT-SIM: starting...", flush=True)
     try:
         t0 = time.time()
-        # 创建 Agent
         agent = InterviewAgent(
             position="前端开发工程师",
             profile={"school": "测试大学", "degree": "本科", "graduation_year": 2027, "target_industry": "科技", "personal_summary": ""},
@@ -107,13 +106,11 @@ async def debug_chat_sim():
             weakness_areas=[],
             resume_data=None,
         )
-        # 模拟开场白
         agent.history.append({"role": "interviewer", "content": "你好，请自我介绍"})
         agent.round_number = 1
         agent.completed_dimensions.add("基础知识")
         print(f"DEBUG CHAT-SIM: agent created in {time.time()-t0:.1f}s, calling respond...", flush=True)
         
-        # 调用 respond
         t1 = time.time()
         response = agent.respond("你好，我叫测试，有3年前端经验")
         elapsed = time.time() - t1
@@ -126,6 +123,68 @@ async def debug_chat_sim():
         }
     except Exception as e:
         print(f"DEBUG CHAT-SIM: error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "detail": str(e)}
+
+
+@app.get("/api/debug/full-chat-test")
+async def debug_full_chat_test():
+    """诊断端点：完整 chat 流程（含 Redis）"""
+    from app.ai.agent import InterviewAgent
+    from app.services.interview_service import store_agent, get_agent, create_session_id
+    import time
+    
+    print("DEBUG FULL-CHAT: starting...", flush=True)
+    try:
+        # 1. 创建 agent
+        agent = InterviewAgent(
+            position="前端开发工程师",
+            profile={"school": "桂林电子科技大学", "degree": "本科", "graduation_year": 2027, "target_industry": "科技", "personal_summary": ""},
+            ability_model=[
+                {"name": "基础知识", "weight": 30, "description": "前端基础知识"},
+                {"name": "项目经验", "weight": 40, "description": "项目实战"},
+                {"name": "沟通能力", "weight": 30, "description": "沟通表达"},
+            ],
+            weakness_areas=[],
+            resume_data=None,
+        )
+        # 2. 生成开场白
+        t0 = time.time()
+        opening = agent.generate_opening()
+        opening_time = time.time() - t0
+        print(f"DEBUG FULL-CHAT: opening ok in {opening_time:.1f}s", flush=True)
+
+        # 3. 存入 Redis
+        session_key = create_session_id()
+        await store_agent(session_key, agent)
+        print(f"DEBUG FULL-CHAT: stored in Redis, key={session_key}", flush=True)
+
+        # 4. 从 Redis 取出
+        agent2 = await get_agent(session_key)
+        if agent2 is None:
+            return {"status": "error", "detail": "Agent not found in Redis after store"}
+        print("DEBUG FULL-CHAT: retrieved from Redis", flush=True)
+
+        # 5. 调用 respond
+        t1 = time.time()
+        response = agent2.respond("你好，我叫测试，有3年前端经验")
+        respond_time = time.time() - t1
+        print(f"DEBUG FULL-CHAT: respond ok in {respond_time:.1f}s", flush=True)
+
+        # 6. 存回 Redis
+        await store_agent(session_key, agent2)
+
+        return {
+            "status": "ok",
+            "opening": opening[:100],
+            "opening_time": f"{opening_time:.1f}s",
+            "response": response["content"][:200],
+            "respond_time": f"{respond_time:.1f}s",
+            "round": response["round_number"],
+        }
+    except Exception as e:
+        print(f"DEBUG FULL-CHAT: error: {e}", flush=True)
         import traceback
         traceback.print_exc()
         return {"status": "error", "detail": str(e)}
