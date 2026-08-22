@@ -11,7 +11,8 @@ COPY backend/requirements.txt /app/requirements.txt
 # 全部走清华源，稳定可靠
 RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip install --no-cache-dir torch -i https://pypi.tuna.tsinghua.edu.cn/simple && \
-    pip install --no-cache-dir sentence-transformers==3.2.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+    pip install --no-cache-dir --no-deps sentence-transformers==3.2.0 -i https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip install --no-cache-dir scikit-learn scipy transformers tokenizers huggingface-hub safetensors Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 COPY backend/ /app/
 
