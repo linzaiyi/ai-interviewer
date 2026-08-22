@@ -44,7 +44,11 @@ class Evaluator:
         )
 
         messages = [{"role": "user", "content": prompt}]
-        response = await self.llm.ainvoke(messages)
+        try:
+            response = await self.llm.ainvoke(messages)
+        except Exception as e:
+            print(f"Evaluator LLM ainvoke failed: {e}", flush=True)
+            return self._empty_result(ability_model, f"评分服务暂时不可用：{str(e)[:100]}")
         content = response.content
 
         json_match = re.search(r"\{.*\}", content, re.DOTALL)

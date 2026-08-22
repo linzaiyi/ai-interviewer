@@ -80,7 +80,11 @@ class InterviewAgent:
         self.round_number = 1
         prompt = self._build_system_prompt() + "\n\n请生成面试开场白：先简单介绍自己（面试官），然后请候选人做一段1-2分钟的自我介绍。语气要轻松友好，不要一上来就问技术问题。"
         messages = [SystemMessage(content=prompt)]
-        response = await self.llm.ainvoke(messages)
+        try:
+            response = await self.llm.ainvoke(messages)
+        except Exception as e:
+            print(f"LLM ainvoke failed in generate_opening: {e}", flush=True)
+            return f"你好！我是 AI 面试官，今天由我来和你聊聊。请先简单介绍一下自己吧。（注意：AI 服务暂时不稳定，如果后续回复异常请稍后重试）"
         content = response.content
         self.history.append({"role": "interviewer", "content": content})
         return content
@@ -113,17 +117,20 @@ class InterviewAgent:
             dimension_name = current_dimension["name"]
             dimension_desc = current_dimension.get("description", dimension_name)
             # RAG 检索：从题库中查找与该维度相关的参考题目（在线程池中运行，避免阻塞事件循环）
-            rag_questions = await asyncio.to_thread(
-                search_questions, self.position, f"{dimension_name} {dimension_desc}", 3
-            )
             rag_context = ""
-            if rag_questions:
-                rag_context = "\n\n以下是从题库中检索到的参考题目，供你参考出题风格和方向：\n"
-                for i, q in enumerate(rag_questions, 1):
-                    rag_context += f"{i}. {q['content']}\n"
-                    if q.get("reference_answer"):
-                        rag_context += f"   参考答案要点：{q['reference_answer']}\n"
-                rag_context += "\n请参考以上题目的风格，结合候选人的实际背景，生成一个考察该维度的面试问题。"
+            try:
+                rag_questions = await asyncio.to_thread(
+                    search_questions, self.position, f"{dimension_name} {dimension_desc}", 3
+                )
+                if rag_questions:
+                    rag_context = "\n\n以下是从题库中检索到的参考题目，供你参考出题风格和方向：\n"
+                    for i, q in enumerate(rag_questions, 1):
+                        rag_context += f"{i}. {q['content']}\n"
+                        if q.get("reference_answer"):
+                            rag_context += f"   参考答案要点：{q['reference_answer']}\n"
+                    rag_context += "\n请参考以上题目的风格，结合候选人的实际背景，生成一个考察该维度的面试问题。"
+            except Exception as e:
+                print(f"RAG search failed: {e}", flush=True)
             end_instruction = (
                 f"\n\n当前轮需要考察候选人的【{dimension_name}】能力（权重{current_dimension['weight']}%），"
                 f"请根据候选人上一轮的回答，提出一个与该维度相关的问题。"
@@ -135,7 +142,17 @@ class InterviewAgent:
 
         messages.append(HumanMessage(content=end_instruction))
 
-        response = await self.llm.ainvoke(messages)
+        try:
+            response = await self.llm.ainvoke(messages)
+        except Exception as e:
+            print(f"LLM ainvoke failed: {e}", flush=True)
+            return {
+                "role": "interviewer",
+                "content": f"抱歉，AI 服务暂时不可用，请稍后重试。（错误：{str(e)[:100]}）",
+                "is_complete": False,
+                "round_number": self.round_number,
+                "max_rounds": self.max_rounds,
+            }
         content = response.content
         self.history.append({"role": "interviewer", "content": content})
 

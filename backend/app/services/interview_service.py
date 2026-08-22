@@ -67,9 +67,15 @@ async def chat(session_key: str, user_message: str) -> dict:
     agent = await get_agent(session_key)
     if not agent:
         raise ValueError("面试会话不存在或已过期")
-    response = await agent.respond(user_message)
-    await store_agent(session_key, agent)
-    return response
+    try:
+        response = await agent.respond(user_message)
+        await store_agent(session_key, agent)
+        return response
+    except Exception as e:
+        import traceback
+        print(f"CHAT ERROR: {e}", flush=True)
+        traceback.print_exc()
+        raise
 
 
 def end_interview(session_key: str) -> dict:
