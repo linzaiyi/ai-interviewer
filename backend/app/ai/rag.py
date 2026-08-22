@@ -11,10 +11,14 @@ settings = get_settings()
 _embedding_model = None
 
 
-def get_embedding_model() -> SentenceTransformer:
+def get_embedding_model():
     global _embedding_model
     if _embedding_model is None:
-        _embedding_model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        try:
+            _embedding_model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        except Exception as e:
+            print(f"RAG: embedding model load failed (RAG disabled): {e}", flush=True)
+            return None
     return _embedding_model
 
 
@@ -78,6 +82,8 @@ def search_questions(position: str, query: str, n_results: int = 5) -> list[dict
 
         # 生成查询 embedding
         model = get_embedding_model()
+        if model is None:
+            return []
         query_embedding = model.encode([query], normalize_embeddings=True)
 
         # 搜索

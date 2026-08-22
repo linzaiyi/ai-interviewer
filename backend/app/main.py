@@ -20,14 +20,6 @@ async def lifespan(app: FastAPI):
         print("LIFESPAN: creating tables...", flush=True)
         await conn.run_sync(Base.metadata.create_all)
         print("LIFESPAN: tables created", flush=True)
-    # 预加载 embedding 模型（避免首次 RAG 查询时 OOM 崩溃）
-    try:
-        from app.ai.rag import get_embedding_model
-        print("LIFESPAN: loading embedding model...", flush=True)
-        get_embedding_model()
-        print("LIFESPAN: embedding model loaded", flush=True)
-    except Exception as e:
-        print(f"LIFESPAN: embedding model load failed (RAG disabled): {e}", flush=True)
     print("LIFESPAN: startup complete, yielding...", flush=True)
     yield
     print("LIFESPAN: shutting down...", flush=True)
@@ -65,26 +57,4 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "app": "AI Interviewer", "version": "f15b694"}
-
-
-@app.get("/api/debug/llm-test")
-async def debug_llm_test():
-    """诊断端点：直接测试 LLM 调用"""
-    from app.ai.llm import get_llm
-    from app.core.config import get_settings
-    from langchain_core.messages import HumanMessage
-    
-    settings = get_settings()
-    print(f"DEBUG LLM TEST: api_key={settings.deepseek_api_key[:8]}... base_url={settings.deepseek_base_url}", flush=True)
-    try:
-        llm = get_llm(temperature=0.7)
-        print("DEBUG LLM TEST: invoking...", flush=True)
-        response = llm.invoke([HumanMessage(content="回复：你好")])
-        print(f"DEBUG LLM TEST: ok", flush=True)
-        return {"status": "ok", "llm_response": response.content[:200]}
-    except Exception as e:
-        print(f"DEBUG LLM TEST: error: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "detail": str(e)}
+    return {"status": "ok", "app": "AI Interviewer"}
