@@ -57,4 +57,30 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "app": "AI Interviewer"}
+    return {"status": "ok", "app": "AI Interviewer", "ver": "fix-oom"}
+
+
+@app.get("/api/debug/llm-test")
+async def debug_llm_test():
+    """诊断端点：直接测试 LLM 调用"""
+    from app.ai.llm import get_llm
+    from langchain_core.messages import HumanMessage, SystemMessage
+    import time
+    
+    print("DEBUG: starting LLM test...", flush=True)
+    try:
+        llm = get_llm(temperature=0.7)
+        print("DEBUG: llm created, invoking...", flush=True)
+        t0 = time.time()
+        response = llm.invoke([
+            SystemMessage(content="你是面试官"),
+            HumanMessage(content="回复：你好")
+        ])
+        elapsed = time.time() - t0
+        print(f"DEBUG: LLM ok in {elapsed:.1f}s", flush=True)
+        return {"status": "ok", "llm_response": response.content[:200], "elapsed": f"{elapsed:.1f}s"}
+    except Exception as e:
+        print(f"DEBUG: LLM error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "detail": str(e)}
