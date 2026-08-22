@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-import time
+import asyncio
 from app.ai.agent import InterviewAgent
 from app.ai.evaluator import Evaluator
 from app.core.redis import get_redis
@@ -56,7 +56,7 @@ async def start_interview(
         weakness_areas=weakness_areas,
         resume_data=resume_data,
     )
-    opening = await agent.generate_opening()
+    opening = await asyncio.to_thread(agent.generate_opening)
     session_key = create_session_id()
     await store_agent(session_key, agent)
     return session_key, opening
@@ -68,7 +68,7 @@ async def chat(session_key: str, user_message: str) -> dict:
     if not agent:
         raise ValueError("面试会话不存在或已过期")
     try:
-        response = await agent.respond(user_message)
+        response = await asyncio.to_thread(agent.respond, user_message)
         await store_agent(session_key, agent)
         return response
     except Exception as e:
@@ -91,10 +91,11 @@ async def async_end_interview(session_key: str) -> dict:
 
     conversation = agent.get_conversation()
     evaluator = Evaluator()
-    result = await evaluator.evaluate(
-        position=agent.position,
-        ability_model=agent.ability_model,
-        conversation=conversation,
+    result = await asyncio.to_thread(
+        evaluator.evaluate,
+        agent.position,
+        agent.ability_model,
+        conversation,
     )
     await remove_agent(session_key)
     return result

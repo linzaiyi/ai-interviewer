@@ -1,4 +1,3 @@
-import asyncio
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from app.ai.llm import get_llm
 from app.ai.prompts import INTERVIEW_SYSTEM_PROMPT
@@ -75,21 +74,21 @@ class InterviewAgent:
             parts.append(f"【候选人技能】{skills_str}")
         return "\n".join(parts) if parts else "（候选人已上传简历，但未提取到项目/经历详情）"
 
-    async def generate_opening(self) -> str:
+    def generate_opening(self) -> str:
         """生成开场白"""
         self.round_number = 1
         prompt = self._build_system_prompt() + "\n\n请生成面试开场白：先简单介绍自己（面试官），然后请候选人做一段1-2分钟的自我介绍。语气要轻松友好，不要一上来就问技术问题。"
         messages = [SystemMessage(content=prompt)]
         try:
-            response = await self.llm.ainvoke(messages)
+            response = self.llm.invoke(messages)
         except Exception as e:
-            print(f"LLM ainvoke failed in generate_opening: {e}", flush=True)
+            print(f"LLM invoke failed in generate_opening: {e}", flush=True)
             return f"你好！我是 AI 面试官，今天由我来和你聊聊。请先简单介绍一下自己吧。（注意：AI 服务暂时不稳定，如果后续回复异常请稍后重试）"
         content = response.content
         self.history.append({"role": "interviewer", "content": content})
         return content
 
-    async def respond(self, user_message: str) -> dict:
+    def respond(self, user_message: str) -> dict:
         """处理候选人回答，返回 AI 面试官响应"""
         self.history.append({"role": "candidate", "content": user_message})
         self.round_number += 1
@@ -141,9 +140,9 @@ class InterviewAgent:
         messages.append(HumanMessage(content=end_instruction))
 
         try:
-            response = await self.llm.ainvoke(messages)
+            response = self.llm.invoke(messages)
         except Exception as e:
-            print(f"LLM ainvoke failed: {e}", flush=True)
+            print(f"LLM invoke failed: {e}", flush=True)
             return {
                 "role": "interviewer",
                 "content": f"抱歉，AI 服务暂时不可用，请稍后重试。（错误：{str(e)[:100]}）",

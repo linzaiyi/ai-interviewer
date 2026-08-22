@@ -25,7 +25,7 @@ class Evaluator:
     def __init__(self):
         self.llm = get_llm(temperature=0.2)
 
-    async def evaluate(self, position: str, ability_model: list[dict], conversation: list[dict]) -> dict:
+    def evaluate(self, position: str, ability_model: list[dict], conversation: list[dict]) -> dict:
         """对面试对话进行评分"""
         conversation_text = "\n".join([
             f"{'面试官' if m['role'] == 'interviewer' else '候选人'}: {m['content']}"
@@ -45,9 +45,9 @@ class Evaluator:
 
         messages = [{"role": "user", "content": prompt}]
         try:
-            response = await self.llm.ainvoke(messages)
+            response = self.llm.invoke(messages)
         except Exception as e:
-            print(f"Evaluator LLM ainvoke failed: {e}", flush=True)
+            print(f"Evaluator LLM invoke failed: {e}", flush=True)
             return self._empty_result(ability_model, f"评分服务暂时不可用：{str(e)[:100]}")
         content = response.content
 

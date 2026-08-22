@@ -1,4 +1,5 @@
 import hashlib
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -63,7 +64,8 @@ async def upload_resume(
 
     # AI 解析
     parser = ResumeParser()
-    analysis = await parser.parse_async(
+    analysis = await asyncio.to_thread(
+        parser.parse,
         resume_text=raw_text,
         position=position,
         industry=target_industry,
