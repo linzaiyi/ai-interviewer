@@ -65,21 +65,23 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "app": "AI Interviewer"}
+    return {"status": "ok", "app": "AI Interviewer", "version": "f15b694"}
 
 
 @app.get("/api/debug/llm-test")
 async def debug_llm_test():
-    """诊断端点：直接测试 LLM 调用是否正常"""
+    """诊断端点：直接测试 LLM 调用"""
     from app.ai.llm import get_llm
+    from app.core.config import get_settings
     from langchain_core.messages import HumanMessage
     
-    print("DEBUG LLM TEST: starting...", flush=True)
+    settings = get_settings()
+    print(f"DEBUG LLM TEST: api_key={settings.deepseek_api_key[:8]}... base_url={settings.deepseek_base_url}", flush=True)
     try:
         llm = get_llm(temperature=0.7)
-        print("DEBUG LLM TEST: llm created, invoking...", flush=True)
-        response = llm.invoke([HumanMessage(content="请用一句话回复：你好，我是AI助手。")])
-        print(f"DEBUG LLM TEST: response received: {response.content[:50]}", flush=True)
+        print("DEBUG LLM TEST: invoking...", flush=True)
+        response = llm.invoke([HumanMessage(content="回复：你好")])
+        print(f"DEBUG LLM TEST: ok", flush=True)
         return {"status": "ok", "llm_response": response.content[:200]}
     except Exception as e:
         print(f"DEBUG LLM TEST: error: {e}", flush=True)
